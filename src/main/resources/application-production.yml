@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+
+logging:
+  level:
+    com.bodywhy: INFO

@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bodywhy
+    username: ${DB_USERNAME:bodywhy}
+    password: ${DB_PASSWORD:bodywhy}
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+
+logging:
+  level:
+    com.bodywhy: DEBUG
