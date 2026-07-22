@@ -1,11 +1,19 @@
+server:
+  port: 8081
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/bodywhy
-    username: ${DB_USERNAME:bodywhy}
-    password: ${DB_PASSWORD:bodywhy}
+    username: bodywhy
+    password: bodywhy
+
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY:}
+      base-url: https://api.groq.com/openai
+      api-key: ${GROQ_API_KEY:}
+      chat:
+        options:
+          model: llama-3.3-70b-versatile
 
 logging:
   level:
