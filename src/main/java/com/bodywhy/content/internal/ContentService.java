@@ -4,6 +4,8 @@ import com.bodywhy.content.port.ConceptNodeView;
 import com.bodywhy.content.port.ContentAuthoringPort;
 import com.bodywhy.content.port.ContentQueryPort;
 import com.bodywhy.content.port.EdgeView;
+import com.bodywhy.content.port.NodeApprovedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,10 +19,14 @@ class ContentService implements ContentQueryPort, ContentAuthoringPort {
 
     private final ConceptNodeRepository nodeRepository;
     private final CausalRelationshipRepository edgeRepository;
+    private final ApplicationEventPublisher events;
 
-    ContentService(ConceptNodeRepository nodeRepository, CausalRelationshipRepository edgeRepository) {
+    ContentService(ConceptNodeRepository nodeRepository,
+                   CausalRelationshipRepository edgeRepository,
+                   ApplicationEventPublisher events) {
         this.nodeRepository = nodeRepository;
         this.edgeRepository = edgeRepository;
+        this.events = events;
     }
 
     // ---- ContentQueryPort ----
@@ -35,7 +41,9 @@ class ContentService implements ContentQueryPort, ContentAuthoringPort {
     @Override
     public List<ConceptNodeView> getRelatedConcepts(UUID id) {
         return edgeRepository.findLiveEdgesTouching(id).stream()
-                .map(edge -> edge.getSourceNodeId().equals(id) ? edge.getTargetNodeId() : edge.getSourceNodeId())
+                .map(edge -> edge.getSourceNodeId().equals(id)
+                        ? edge.getTargetNodeId()
+                        : edge.getSourceNodeId())
                 .distinct()
                 .map(nodeRepository::findById)
                 .flatMap(Optional::stream)
@@ -75,8 +83,11 @@ class ContentService implements ContentQueryPort, ContentAuthoringPort {
 
     @Override
     @Transactional
-    public void updateMechanism(UUID nodeId, String mechanismStepsJson, String realizationText,
-                                String threadText, UUID threadNodeId) {
+    public void updateMechanism(UUID nodeId,
+                                String mechanismStepsJson,
+                                String realizationText,
+                                String threadText,
+                                UUID threadNodeId) {
         var node = requireNode(nodeId);
         node.setMechanismStepsJson(mechanismStepsJson);
         node.setRealizationText(realizationText);
@@ -93,15 +104,24 @@ class ContentService implements ContentQueryPort, ContentAuthoringPort {
     @Transactional
     public void approveNode(UUID nodeId, UUID reviewerId) {
         requireNode(nodeId).approve(reviewerId);
+        events.publishEvent(new NodeApprovedEvent(nodeId));
     }
 
     @Override
     @Transactional
-    public UUID draftEdge(UUID sourceNodeId, UUID targetNodeId, String relationshipType, String strength) {
+    public UUID draftEdge(UUID sourceNodeId,
+                          UUID targetNodeId,
+                          String relationshipType,
+                          String strength) {
+
         var entity = new CausalRelationshipEntity(
-                UUID.randomUUID(), sourceNodeId, targetNodeId,
-                RelationshipType.valueOf(relationshipType), EvidenceStrength.valueOf(strength)
+                UUID.randomUUID(),
+                sourceNodeId,
+                targetNodeId,
+                RelationshipType.valueOf(relationshipType),
+                EvidenceStrength.valueOf(strength)
         );
+
         edgeRepository.save(entity);
         return entity.getId();
     }
@@ -114,18 +134,22 @@ class ContentService implements ContentQueryPort, ContentAuthoringPort {
 
         // The cross-aggregate invariant from Workflow 2: an edge cannot approve
         // unless BOTH endpoint nodes are already approved. This is a read-check
-        // against two other aggregates, not a nested transaction across them —
-        // exactly the pattern validated during the workflow trace.
+        // against two other aggregates, not a nested transaction across them.
         boolean sourceApproved = nodeRepository.findById(edge.getSourceNodeId())
-                .map(ConceptNodeEntity::isApproved).orElse(false);
+                .map(ConceptNodeEntity::isApproved)
+                .orElse(false);
+
         boolean targetApproved = nodeRepository.findById(edge.getTargetNodeId())
-                .map(ConceptNodeEntity::isApproved).orElse(false);
+                .map(ConceptNodeEntity::isApproved)
+                .orElse(false);
 
         if (!sourceApproved || !targetApproved) {
             throw new IllegalStateException(
-                    "Cannot approve edge " + edgeId + ": both endpoint nodes must be approved first"
+                    "Cannot approve edge " + edgeId +
+                            ": both endpoint nodes must be approved first"
             );
         }
+
         edge.approve(reviewerId);
     }
 
@@ -138,10 +162,17 @@ class ContentService implements ContentQueryPort, ContentAuthoringPort {
 
     private ConceptNodeView toView(ConceptNodeEntity e) {
         return new ConceptNodeView(
-                e.getId(), e.getType().name(), e.getTitle(),
-                e.getHookText(), e.getMechanismStepsJson(), e.getRealizationText(),
-                e.getThreadText(), e.getThreadNodeId(), e.getDepthText(),
-                e.isApproved(), e.getReviewedAt()
+                e.getId(),
+                e.getType().name(),
+                e.getTitle(),
+                e.getHookText(),
+                e.getMechanismStepsJson(),
+                e.getRealizationText(),
+                e.getThreadText(),
+                e.getThreadNodeId(),
+                e.getDepthText(),
+                e.isApproved(),
+                e.getReviewedAt()
         );
     }
 }
