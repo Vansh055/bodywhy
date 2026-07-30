@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -30,18 +31,39 @@ class EmbeddingSyncService {
     public void onNodeApproved(NodeApprovedEvent event) {
         content.getApprovedNode(event.nodeId()).ifPresentOrElse(
                 node -> {
+
+                    // Remove any previous embedding for this node
+                    Filter.Expression filter = new Filter.Expression(
+                            Filter.ExpressionType.EQ,
+                            new Filter.Key("nodeId"),
+                            new Filter.Value(node.id().toString())
+                    );
+
+                    vectorStore.delete(filter);
+
                     String text = String.join(". ",
                             node.title(),
-                            safe(node.hookText()), safe(node.realizationText()), safe(node.depthText()));
+                            safe(node.hookText()),
+                            safe(node.realizationText()),
+                            safe(node.depthText()));
 
-                    var doc = new Document(text, Map.of(
-                            "nodeId", node.id().toString(), "title", node.title()));
+                    var doc = new Document(
+                            text,
+                            Map.of(
+                                    "nodeId", node.id().toString(),
+                                    "title", node.title()
+                            )
+                    );
+
                     vectorStore.add(List.of(doc));
+
                     log.info("Embedded and stored node '{}' ({})", node.title(), node.id());
                 },
                 () -> log.warn("NodeApprovedEvent fired for {} but node isn't approved-retrievable", event.nodeId())
         );
     }
 
-    private static String safe(String s) { return s == null ? "" : s; }
+    private static String safe(String s) {
+        return s == null ? "" : s;
+    }
 }

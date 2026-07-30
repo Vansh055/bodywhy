@@ -23,16 +23,46 @@ class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                    FilterChain chain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain chain)
+            throws ServletException, IOException {
+
+        System.out.println("======================================");
+        System.out.println("REQUEST: " + request.getMethod() + " " + request.getRequestURI());
+
         String header = request.getHeader("Authorization");
+        System.out.println("AUTH HEADER = " + header);
+
         if (header != null && header.startsWith("Bearer ")) {
+
             String token = header.substring(7);
-            identity.validateToken(token).ifPresent(userId -> {
-                var auth = new UsernamePasswordAuthenticationToken(userId, null, List.of());
+
+            System.out.println("TOKEN FOUND");
+            System.out.println("TOKEN = " + token);
+
+            var result = identity.validateToken(token);
+
+            System.out.println("VALIDATION RESULT = " + result);
+
+            result.ifPresent(userId -> {
+                System.out.println("AUTHENTICATED USER = " + userId);
+
+                var auth = new UsernamePasswordAuthenticationToken(
+                        userId,
+                        null,
+                        List.of()
+                );
+
                 SecurityContextHolder.getContext().setAuthentication(auth);
             });
+
+        } else {
+            System.out.println("NO BEARER TOKEN FOUND");
         }
+
+        System.out.println("======================================");
+
         chain.doFilter(request, response);
     }
 }

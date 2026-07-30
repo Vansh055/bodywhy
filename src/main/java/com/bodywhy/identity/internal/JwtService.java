@@ -12,6 +12,7 @@ import java.util.UUID;
 
 @Component
 class JwtService {
+
     private final SecretKey key;
     private final long expirationMs;
 
@@ -31,11 +32,32 @@ class JwtService {
     }
 
     Optional<UUID> validate(String token) {
+
         try {
-            String subject = Jwts.parser().verifyWith(key).build()
-                    .parseSignedClaims(token).getPayload().getSubject();
+            System.out.println("======================================");
+            System.out.println("JWT TOKEN RECEIVED:");
+            System.out.println(token);
+
+            String subject = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+
+            System.out.println("JWT VALID");
+            System.out.println("JWT SUBJECT = " + subject);
+            System.out.println("======================================");
+
             return Optional.of(UUID.fromString(subject));
+
         } catch (Exception e) {
+
+            System.out.println("======================================");
+            System.out.println("JWT VALIDATION FAILED");
+            e.printStackTrace();
+            System.out.println("======================================");
+
             return Optional.empty();
         }
     }

@@ -69,9 +69,21 @@ class ContentService implements ContentQueryPort, ContentAuthoringPort {
     @Override
     @Transactional
     public UUID draftNode(String type, String title) {
-        var entity = new ConceptNodeEntity(UUID.randomUUID(), NodeType.valueOf(type), title);
-        nodeRepository.save(entity);
-        return entity.getId();
+
+        NodeType nodeType = NodeType.valueOf(type);
+
+        return nodeRepository.findByTypeAndTitle(nodeType, title)
+                .map(ConceptNodeEntity::getId)
+                .orElseGet(() -> {
+                    var entity = new ConceptNodeEntity(
+                            UUID.randomUUID(),
+                            nodeType,
+                            title
+                    );
+
+                    nodeRepository.save(entity);
+                    return entity.getId();
+                });
     }
 
     @Override
