@@ -9,5 +9,4 @@ public class BodyWhyApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(BodyWhyApplication.class, args);
 	}
-
 }
