@@ -1,7 +1,7 @@
 package com.bodywhy.content.internal;
 
 import jakarta.persistence.*;
-        import java.time.Instant;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -33,6 +33,12 @@ public class ConceptNodeEntity {
 
     @Column(name = "depth_text")
     private String depthText;
+
+    @Column(name = "tension_text")
+    private String tensionText;
+
+    @Column(name = "takeaway_text")
+    private String takeawayText;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "review_status")
@@ -67,6 +73,7 @@ public class ConceptNodeEntity {
         if (this.reviewStatus == ReviewStatus.APPROVED) {
             return;
         }
+
         this.reviewStatus = ReviewStatus.APPROVED;
         this.reviewedBy = reviewerId;
         this.reviewedAt = Instant.now();
@@ -82,31 +89,103 @@ public class ConceptNodeEntity {
         return this.reviewStatus == ReviewStatus.APPROVED;
     }
 
-    // Getters — no public setters beyond the behavior methods above;
-    // state transitions go through approve()/markNeedsUpdate(), never a raw setter,
-    // so the review-gating invariant can't be bypassed by accident.
+    // Getters
 
-    public UUID getId() { return id; }
-    public NodeType getType() { return type; }
-    public String getTitle() { return title; }
-    public String getHookText() { return hookText; }
-    public String getMechanismStepsJson() { return mechanismStepsJson; }
-    public String getRealizationText() { return realizationText; }
-    public String getThreadText() { return threadText; }
-    public UUID getThreadNodeId() { return threadNodeId; }
-    public String getDepthText() { return depthText; }
-    public ReviewStatus getReviewStatus() { return reviewStatus; }
-    public UUID getReviewedBy() { return reviewedBy; }
-    public Instant getReviewedAt() { return reviewedAt; }
-    public int getVersion() { return version; }
+    public UUID getId() {
+        return id;
+    }
 
-    public void setHookText(String hookText) { this.hookText = hookText; this.updatedAt = Instant.now(); }
-    public void setMechanismStepsJson(String json) { this.mechanismStepsJson = json; this.updatedAt = Instant.now(); }
-    public void setRealizationText(String text) { this.realizationText = text; this.updatedAt = Instant.now(); }
+    public NodeType getType() {
+        return type;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getHookText() {
+        return hookText;
+    }
+
+    public String getMechanismStepsJson() {
+        return mechanismStepsJson;
+    }
+
+    public String getRealizationText() {
+        return realizationText;
+    }
+
+    public String getThreadText() {
+        return threadText;
+    }
+
+    public UUID getThreadNodeId() {
+        return threadNodeId;
+    }
+
+    public String getDepthText() {
+        return depthText;
+    }
+
+    public String getTensionText() {
+        return tensionText;
+    }
+
+    public String getTakeawayText() {
+        return takeawayText;
+    }
+
+    public ReviewStatus getReviewStatus() {
+        return reviewStatus;
+    }
+
+    public UUID getReviewedBy() {
+        return reviewedBy;
+    }
+
+    public Instant getReviewedAt() {
+        return reviewedAt;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    // Setters
+
+    public void setHookText(String hookText) {
+        this.hookText = hookText;
+        this.updatedAt = Instant.now();
+    }
+
+    public void setMechanismStepsJson(String json) {
+        this.mechanismStepsJson = json;
+        this.updatedAt = Instant.now();
+    }
+
+    public void setRealizationText(String text) {
+        this.realizationText = text;
+        this.updatedAt = Instant.now();
+    }
+
     public void setThreadText(String text, UUID threadNodeId) {
         this.threadText = text;
         this.threadNodeId = threadNodeId;
         this.updatedAt = Instant.now();
     }
-    public void setDepthText(String text) { this.depthText = text; this.updatedAt = Instant.now(); }
+
+    public void setDepthText(String text) {
+        this.depthText = text;
+        this.updatedAt = Instant.now();
+    }
+
+    public void setTensionText(String t) {
+        this.tensionText = t;
+        this.updatedAt = Instant.now();
+    }
+
+    public void setTakeawayText(String t) {
+        this.takeawayText = t;
+        this.updatedAt = Instant.now();
+    }
 }

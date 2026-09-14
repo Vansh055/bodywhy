@@ -13,6 +13,8 @@ public record ConceptNodeView(
         String threadText,
         UUID threadNodeId,
         String depthText,
+        String tensionText,
+        String takeawayText,
         boolean reviewed,
         Instant reviewedAt
 ) {}

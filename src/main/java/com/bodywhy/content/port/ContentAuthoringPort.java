@@ -8,14 +8,28 @@ public interface ContentAuthoringPort {
 
     void updateHook(UUID nodeId, String hookText);
 
-    void updateMechanism(UUID nodeId, String mechanismStepsJson, String realizationText,
-                         String threadText, UUID threadNodeId);
+    void updateMechanism(
+            UUID nodeId,
+            String mechanismStepsJson,
+            String realizationText,
+            String threadText,
+            UUID threadNodeId
+    );
 
     void updateDepth(UUID nodeId, String depthText);
 
+    void updateTension(UUID nodeId, String tensionText);
+
+    void updateTakeaway(UUID nodeId, String takeawayText);
+
     void approveNode(UUID nodeId, UUID reviewerId);
 
-    UUID draftEdge(UUID sourceNodeId, UUID targetNodeId, String relationshipType, String strength);
+    UUID draftEdge(
+            UUID sourceNodeId,
+            UUID targetNodeId,
+            String relationshipType,
+            String strength
+    );
 
     void approveEdge(UUID edgeId, UUID reviewerId);
 }

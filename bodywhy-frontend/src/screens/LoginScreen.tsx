@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function LoginScreen() {
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,7 +14,11 @@ export default function LoginScreen() {
 
     try {
       await login(email, password);
+
       alert("Login successful!");
+
+      // Go to the main BodyWhy experience
+      navigate("/today");
     } catch {
       alert("Login failed");
     }
@@ -33,7 +38,11 @@ export default function LoginScreen() {
 
       <form
         onSubmit={handleSubmit}
-        style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+        }}
       >
         <input
           type="email"
@@ -50,8 +59,10 @@ export default function LoginScreen() {
         />
 
         <button type="submit">Login</button>
+
         <p>
-            Don't have an account? <Link to="/register">Register</Link>
+          Don't have an account?{" "}
+          <Link to="/register">Register</Link>
         </p>
       </form>
     </div>

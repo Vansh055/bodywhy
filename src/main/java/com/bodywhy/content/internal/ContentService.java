@@ -3,7 +3,6 @@ package com.bodywhy.content.internal;
 import com.bodywhy.content.port.ConceptNodeView;
 import com.bodywhy.content.port.ContentAuthoringPort;
 import com.bodywhy.content.port.ContentQueryPort;
-import com.bodywhy.content.port.EdgeView;
 import com.bodywhy.content.port.NodeApprovedEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -53,12 +52,10 @@ class ContentService implements ContentQueryPort, ContentAuthoringPort {
     }
 
     @Override
-    public List<ConceptNodeView> findRelevantApprovedContent(String naturalLanguageQuery, int limit) {
+    public List<ConceptNodeView> findRelevantApprovedContent(
+            String naturalLanguageQuery, int limit) {
+
         // Placeholder until Milestone 6 wires in real embedding-based retrieval.
-        // Deliberately NOT implemented as a naive LIKE-based text search that could
-        // silently ship as "good enough" — returning empty is more honest than a
-        // fake relevance signal, and keeps this method's contract truthful until
-        // the real implementation lands.
         throw new UnsupportedOperationException(
                 "findRelevantApprovedContent requires the embedding pipeline from Milestone 6"
         );
@@ -89,18 +86,20 @@ class ContentService implements ContentQueryPort, ContentAuthoringPort {
     @Override
     @Transactional
     public void updateHook(UUID nodeId, String hookText) {
-        var node = requireNode(nodeId);
-        node.setHookText(hookText);
+        requireNode(nodeId).setHookText(hookText);
     }
 
     @Override
     @Transactional
-    public void updateMechanism(UUID nodeId,
-                                String mechanismStepsJson,
-                                String realizationText,
-                                String threadText,
-                                UUID threadNodeId) {
+    public void updateMechanism(
+            UUID nodeId,
+            String mechanismStepsJson,
+            String realizationText,
+            String threadText,
+            UUID threadNodeId) {
+
         var node = requireNode(nodeId);
+
         node.setMechanismStepsJson(mechanismStepsJson);
         node.setRealizationText(realizationText);
         node.setThreadText(threadText, threadNodeId);
@@ -114,6 +113,18 @@ class ContentService implements ContentQueryPort, ContentAuthoringPort {
 
     @Override
     @Transactional
+    public void updateTension(UUID nodeId, String tensionText) {
+        requireNode(nodeId).setTensionText(tensionText);
+    }
+
+    @Override
+    @Transactional
+    public void updateTakeaway(UUID nodeId, String takeawayText) {
+        requireNode(nodeId).setTakeawayText(takeawayText);
+    }
+
+    @Override
+    @Transactional
     public void approveNode(UUID nodeId, UUID reviewerId) {
         requireNode(nodeId).approve(reviewerId);
         events.publishEvent(new NodeApprovedEvent(nodeId));
@@ -121,10 +132,11 @@ class ContentService implements ContentQueryPort, ContentAuthoringPort {
 
     @Override
     @Transactional
-    public UUID draftEdge(UUID sourceNodeId,
-                          UUID targetNodeId,
-                          String relationshipType,
-                          String strength) {
+    public UUID draftEdge(
+            UUID sourceNodeId,
+            UUID targetNodeId,
+            String relationshipType,
+            String strength) {
 
         var entity = new CausalRelationshipEntity(
                 UUID.randomUUID(),
@@ -141,19 +153,20 @@ class ContentService implements ContentQueryPort, ContentAuthoringPort {
     @Override
     @Transactional
     public void approveEdge(UUID edgeId, UUID reviewerId) {
+
         var edge = edgeRepository.findById(edgeId)
-                .orElseThrow(() -> new IllegalArgumentException("No such edge: " + edgeId));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("No such edge: " + edgeId));
 
-        // The cross-aggregate invariant from Workflow 2: an edge cannot approve
-        // unless BOTH endpoint nodes are already approved. This is a read-check
-        // against two other aggregates, not a nested transaction across them.
-        boolean sourceApproved = nodeRepository.findById(edge.getSourceNodeId())
-                .map(ConceptNodeEntity::isApproved)
-                .orElse(false);
+        boolean sourceApproved =
+                nodeRepository.findById(edge.getSourceNodeId())
+                        .map(ConceptNodeEntity::isApproved)
+                        .orElse(false);
 
-        boolean targetApproved = nodeRepository.findById(edge.getTargetNodeId())
-                .map(ConceptNodeEntity::isApproved)
-                .orElse(false);
+        boolean targetApproved =
+                nodeRepository.findById(edge.getTargetNodeId())
+                        .map(ConceptNodeEntity::isApproved)
+                        .orElse(false);
 
         if (!sourceApproved || !targetApproved) {
             throw new IllegalStateException(
@@ -169,7 +182,8 @@ class ContentService implements ContentQueryPort, ContentAuthoringPort {
 
     private ConceptNodeEntity requireNode(UUID id) {
         return nodeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("No such node: " + id));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("No such node: " + id));
     }
 
     private ConceptNodeView toView(ConceptNodeEntity e) {
@@ -183,6 +197,8 @@ class ContentService implements ContentQueryPort, ContentAuthoringPort {
                 e.getThreadText(),
                 e.getThreadNodeId(),
                 e.getDepthText(),
+                e.getTensionText(),
+                e.getTakeawayText(),
                 e.isApproved(),
                 e.getReviewedAt()
         );
